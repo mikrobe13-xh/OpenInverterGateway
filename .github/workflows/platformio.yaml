@@ -69,3 +69,8 @@ jobs:
       env:
         GHR_PATH: release/
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        - name: Upload bin files
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-pack
+          path: SRC/ShineWiFi-ModBus/.pio/build/**/*.bin
