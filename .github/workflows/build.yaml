@@ -1,0 +1,36 @@
+name: MEINE-FERTIGE-FIRMWARE
+
+on:
+  workflow_dispatch:
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+      
+    - name: Install PlatformIO
+      run: |
+        python -m pip install --upgrade pip
+        pip install platformio intelhex
+        
+    - name: Modbus-Hack aktivieren
+      run: |
+        cd SRC/ShineWiFi-ModBus
+        cp Config.h.example Config.h
+        sed -i 's/ENABLE_MODBUS_COMMUNICATION 0/ENABLE_MODBUS_COMMUNICATION 1/g' Config.h
+
+    - name: Firmware bauen
+      run: pio run -d SRC/ShineWiFi-ModBus -e ShineWifiX
+      
+    - name: DOWNLOAD-DATEI-ERSTELLEN
+      uses: actions/upload-artifact@v4
+      with:
+        name: Growatt-Hack-Firmware
+        path: SRC/ShineWiFi-ModBus/.pio/build/ShineWifiX/firmware.bin
