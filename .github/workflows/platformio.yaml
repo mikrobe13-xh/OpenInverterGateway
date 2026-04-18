@@ -2,13 +2,6 @@ name: PlatformIO CI
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - master
-    tags:
-      - 'release/*'
-  pull_request:
-    types: [assigned, opened, synchronize, reopened]
 
 jobs:
   build:
@@ -16,72 +9,20 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    - name: Cache pip
-      uses: actions/cache@v4
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
-          
-    - name: Cache PlatformIO
-      uses: actions/cache@v4
-      with:
-        path: ~/.platformio
-        key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
-        
     - name: Set up Python
       uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
       
     - name: Install PlatformIO
       run: |
         python -m pip install --upgrade pip
-        pip install --upgrade intelhex
-        pip install --upgrade platformio
-        pip install intelhex
-        
-    - name: Prepare config
-      run: |
-        # Wir überspringen das Kopieren, damit deine manuelle Config.h erhalten bleibt
-        echo "Using existing Config.h"
+        pip install platformio intelhex
         
     - name: Run PlatformIO
-      run: pio run -d SRC/ShineWiFi-ModBus -e ShineWifiX -e ShineWifiS -e lolin32 -e nodemcu-32s -e d1
+      working-directory: SRC/ShineWiFi-ModBus
+      run: pio run -e ShineWifiX -e ShineWifiS
       
-    - name: Adjust firmware filename
-      if: startsWith(github.ref, 'refs/tags/')
-      run: |
-        mkdir release
-        mv SRC/ShineWiFi-ModBus/.pio/build/lolin32/firmware.bin release/firmware-lolin32.bin
-        mv SRC/ShineWiFi-ModBus/.pio/build/ShineWifiX/firmware.bin release/firmware-ShineWifiX.bin
-        mv SRC/ShineWiFi-ModBus/.pio/build/ShineWifiS/firmware.bin release/firmware-ShineWifiS.bin
-        mv SRC/ShineWiFi-ModBus/.pio/build/nodemcu-32s/firmware.bin release/firmware-nodemcu-32s.bin
-        mv SRC/ShineWiFi-ModBus/.pio/build/d1/firmware.bin release/firmware-d1.bin
-        
-    - name: Prepare config for TLXH inverters
-      if: startsWith(github.ref, 'refs/tags/')
-      run: |
-        sed -i -e "s/GROWATT_MODBUS_VERSION 124/GROWATT_MODBUS_VERSION 3000/g" "SRC/ShineWiFi-ModBus/Config.h"
-        
-    - name: Run PlatformIO for TLXH inverters
-      if: startsWith(github.ref, 'refs/tags/')
-      run: pio run -d SRC/ShineWiFi-ModBus -e ShineWifiX -e lolin32 -e nodemcu-32s -e d1
-      
-    - name: Adjust firmware filename for TLXH inverters
-      if: startsWith(github.ref, 'refs/tags/')
-      run: |
-        mv SRC/ShineWiFi-ModBus/.pio/build/lolin32/firmware.bin release/firmware-lolin32-TLXH.bin
-        mv SRC/ShineWiFi-ModBus/.pio/build/ShineWifiX/firmware.bin release/firmware-ShineWifiX-TLXH.bin
-        mv SRC/ShineWiFi-ModBus/.pio/build/nodemcu-32s/firmware.bin release/firmware-nodemcu-32s-TLXH.bin
-        mv SRC/ShineWiFi-ModBus/.pio/build/d1/firmware.bin release/firmware-d1-TLXH.bin
-        
-    - name: Release
-      uses: fnkr/github-action-ghr@v1
-      if: startsWith(github.ref, 'refs/tags/')
-      env:
-        GHR_PATH: release/
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
     - name: Upload bin files
       uses: actions/upload-artifact@v4
       with:
