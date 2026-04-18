@@ -28,7 +28,7 @@
 #define OTA_PASSWORD "enter_ota_secret_here"
 
 // Enable direct modbus read/write support via the WebGUI. Enabling this is a potential security issue.
-#define ENABLE_MODBUS_COMMUNICATION 0
+#define ENABLE_MODBUS_COMMUNICATION 1
 
 // Define a NTP Server and TZ Info to automatically adjust the inverter date/time.
 // TZ Info can be found at: https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv
